@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Spinning Donut</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: monospace;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="donut"></canvas>
+    <script>
+        const canvas = document.getElementById('donut');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Donut parameters
+        let A = 0;
+        let B = 0;
+        const chars = '.,-~:;=!*#$@';
+        
+        function renderDonut() {
+            const width = canvas.width;
+            const height = canvas.height;
+            // Use a reasonable resolution that scales with screen size
+            const columns = Math.floor(width / 8);
+            const rows = Math.floor(height / 8);
+            
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Create buffers
+            const zBuffer = new Array(columns * rows).fill(0);
+            const charBuffer = new Array(columns * rows).fill(' ');
+            const colorBuffer = new Array(columns * rows).fill('#000');
+            
+            // Render donut
+            for (let j = 0; j < 628; j += 7) {
+                for (let i = 0; i < 628; i += 2) {
+                    const c = Math.sin(i);
+                    const d = Math.cos(j);
+                    const e = Math.sin(A);
+                    const f = Math.sin(j);
+                    const g = Math.cos(A);
+                    const h = d + 2;
+                    const D = 1 / (c * h * e + f * g + 5);
+                    const l = Math.cos(i);
+                    const m = Math.cos(B);
+                    const n = Math.sin(B);
+                    const t = c * h * g - f * e;
+                    const x = Math.floor((columns / 2) + (columns / 2 - 2) * D * (l * h * m - t * n));
+                    const y = Math.floor((rows / 2) + (rows / 2 - 4) * D * (l * h * n + t * m));
+                    const o = x + columns * y;
+                    const N = Math.floor(8 * ((f * e - c * d * g) * m - c * d * e - f * g - l * d * n));
+                    
+                    // Single purple color
+                    const color = '#ff00ff';
+                    
+                    if (y >= 0 && y < rows && x >= 0 && x < columns && D > zBuffer[o]) {
+                        zBuffer[o] = D;
+                        charBuffer[o] = chars[N > 0 ? N : 0];
+                        colorBuffer[o] = color;
+                    }
+                }
+            }
+            
+            // Draw to canvas
+            const pixelSize = 8;
+            
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < columns; x++) {
+                    const idx = x + columns * y;
+                    const char = charBuffer[idx];
+                    if (char !== ' ') {
+                        ctx.fillStyle = colorBuffer[idx];
+                        // Draw as filled rectangle
+                        ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+                    }
+                }
+            }
+            
+            // Update rotation angles
+            A += 0.04;
+            B += 0.02;
+            
+            requestAnimationFrame(renderDonut);
+        }
+        
+        // Start animation
+        renderDonut();
+    </script>
+</body>
+</html>
